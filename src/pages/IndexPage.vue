@@ -4,7 +4,7 @@
       <div class="q-mb-xl">
         <q-input v-model="tempData.name" label="姓名" />
         <q-input v-model="tempData.age" label="年齡" />
-        <q-btn color="primary" class="q-mt-md">新增</q-btn>
+        <q-btn color="primary" class="q-mt-md" @click="handleAddClick(tempData)">新增</q-btn>
       </div>
 
       <q-table
@@ -74,13 +74,17 @@
         </template>
       </q-table>
     </div>
+   
   </q-page>
 </template>
 
 <script setup lang="ts">
 import axios from 'axios';
-import { QTableProps } from 'quasar';
-import { ref } from 'vue';
+import { QTableProps,Dialog  } from 'quasar';
+axios.defaults.baseURL = 'https://dahua.metcfire.com.tw/CrudApi';
+import { ref,onMounted  } from 'vue';
+import { useQuasar } from 'quasar'
+
 interface btnType {
   label: string;
   icon: string;
@@ -119,12 +123,65 @@ const tableButtons = ref([
   },
 ]);
 
+
+onMounted(() => {
+  initData()
+});
 const tempData = ref({
   name: '',
   age: '',
 });
+function handleAddClick(data){
+  axios.post('/CRUD/add', data).then(() => {
+    initData();
+  })
+  // if (tempData.value.name && tempData.value.age) {
+  //   blockData.value.push({
+  //     name: tempData.value.name,
+  //     age: JSON.parse(tempData.value.age),
+  //   });
+  // }
+}
 function handleClickOption(btn, data) {
-  // ...
+ 
+  if (btn.status === 'edit') {
+    
+    switch (btn.status) {
+    case 'edit':
+      axios.patch('/CRUD/edit', {
+        id: data.id,
+        ...tempData.value,
+      }).then(() => {
+        initData();
+      })
+      // $q.dialog({
+      // title: '編輯資料',
+      // form: {
+      //   name: data.name,
+      //   age: data.age.toString(),
+      // },
+      // persistent: true,
+      // ok: '確定', 
+      // cancel: '取消', 
+      break;
+    case 'delete':
+      axios.delete(`/CRUD/delete/${data.id}`).then(() => {
+        initData();
+      }) //  const index = blockData.value.findIndex(item => item === data);
+  //  if (index !== -1) {
+  //    // 從 blockData 
+  //    blockData.value.splice(index, 1);
+  //  }
+      
+   break;
+ 
+  }}
+
+}
+function initData() {
+  axios.get('/CRUD/dataList').then(res => {
+    blockData.value = res.data;
+  })
 }
 </script>
 
